@@ -99,6 +99,7 @@ class Chosen extends AbstractChosen
     @search_field.bind 'cut.chosen', (evt) => this.clipboard_event_checker(evt); return
     @search_field.bind 'paste.chosen', (evt) => this.clipboard_event_checker(evt); return
 
+
     if @is_multiple
       @search_choices.bind 'click.chosen', (evt) => this.choices_click(evt); return
     else
@@ -304,13 +305,22 @@ class Chosen extends AbstractChosen
 
     @search_container.before  choice
 
+  choice_build_from_text: (text) ->
+    choice = $('<li />', { class: "search-choice" }).html("<span>#{text}</span>")
+
+    close_link = $('<a />', { class: 'search-choice-close'})
+    close_link.bind 'click.chosen', (evt) => this.choice_destroy_link_click(evt)
+    choice.append close_link
+
+    @search_container.before  choice
+
   choice_destroy_link_click: (evt) ->
     evt.preventDefault()
     evt.stopPropagation()
     this.choice_destroy $(evt.target) unless @is_disabled
 
   choice_destroy: (link) ->
-    if this.result_deselect( link[0].getAttribute("data-option-array-index") )
+    if link[0].getAttribute("data-option-array-index") and this.result_deselect( link[0].getAttribute("data-option-array-index") )
       this.show_search_field_default()
 
       this.results_hide() if @is_multiple and this.choices_count() > 0 and @search_field.val().length < 1
@@ -318,6 +328,8 @@ class Chosen extends AbstractChosen
       link.parents('li').first().remove()
 
       this.search_field_scale()
+    else
+      link.parents('li').first().remove()
 
   results_reset: ->
     this.reset_single_select_options()
@@ -369,6 +381,9 @@ class Chosen extends AbstractChosen
       evt.preventDefault()
 
       this.search_field_scale()
+    else
+      this.choice_build_from_text @search_field.val()
+      this.show_search_field_default()
 
   single_set_selected_text: (text=@default_text) ->
     if text is @default_text
@@ -463,7 +478,6 @@ class Chosen extends AbstractChosen
     this.search_field_scale()
 
     this.clear_backstroke() if stroke != 8 and this.pending_backstroke
-
     switch stroke
       when 8
         @backstroke_length = this.search_field.val().length
